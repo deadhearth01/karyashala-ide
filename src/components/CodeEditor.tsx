@@ -1,6 +1,7 @@
 'use client';
 
-import Editor from '@monaco-editor/react';
+import { useState, useEffect } from 'react';
+import Editor, { loader } from '@monaco-editor/react';
 import { useTheme } from './ThemeProvider';
 import { Language } from '@/types';
 
@@ -16,10 +17,65 @@ const languageMap: Record<Language, string> = {
   c: 'c',
 };
 
+// Simple fallback editor for offline mode
+function FallbackEditor({ language, value, onChange }: CodeEditorProps) {
+  const { theme } = useTheme();
+  
+  return (
+    <div className="w-full h-full relative">
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={`w-full h-full p-4 font-mono text-sm resize-none outline-none ${
+          theme === 'dark' 
+            ? 'bg-[#1e1e1e] text-[#d4d4d4]' 
+            : 'bg-white text-gray-900'
+        }`}
+        style={{
+          fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, monospace",
+          fontSize: '14px',
+          lineHeight: '1.5',
+          tabSize: 4,
+        }}
+        spellCheck={false}
+        autoCapitalize="off"
+        autoCorrect="off"
+      />
+      <div className={`absolute top-2 right-2 text-xs px-2 py-1 rounded ${
+        theme === 'dark' ? 'bg-yellow-900/50 text-yellow-300' : 'bg-yellow-100 text-yellow-800'
+      }`}>
+        Offline Mode
+      </div>
+    </div>
+  );
+}
+
 export default function CodeEditor({ language, value, onChange, onMount }: CodeEditorProps) {
   const { theme } = useTheme();
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Set a timeout for Monaco loading
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (isLoading) {
+        console.warn('Monaco editor load timeout - falling back to simple editor');
+        setLoadFailed(true);
+        setIsLoading(false);
+      }
+    }, 10000); // 10 second timeout
+
+    return () => clearTimeout(timeout);
+  }, [isLoading]);
+
+  // If Monaco failed to load, use fallback
+  if (loadFailed) {
+    return <FallbackEditor language={language} value={value} onChange={onChange} />;
+  }
 
   const handleEditorMount = (editor: any) => {
+    setIsLoading(false);
+    
     // Configure editor settings
     editor.updateOptions({
       fontSize: 14,
