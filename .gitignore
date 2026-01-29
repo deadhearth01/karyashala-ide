@@ -1,0 +1,85 @@
+# Dependencies
+node_modules
+/.pnp
+.pnp.js
+package-lock.json
+yarn.lock
+
+# Testing
+/.coverage
+/.nyc_output
+
+# Production
+/build
+/dist
+/.next
+/out
+
+# Misc
+.DS_Store
+*.pem
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+lerna-debug.log*
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Module directories
+jspm_packages/
+
+# TypeScript
+*.tsbuildinfo
+
+# Next.js
+.next/
+out/
+
+# Turbopack
+.turbopack
+
+# Cache directories
+.cache
+.eslintcache
+
+# Temporary files
+tmp/
+temp/
+# Reference folder (duplicate of public/browsercc)
+run_c_offline/
+# Copilot agents/skills (local)
+.agents/
