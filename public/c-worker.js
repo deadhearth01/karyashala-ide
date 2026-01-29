@@ -1,24 +1,62 @@
 // C Compiler Web Worker - Module type worker for ES imports
 // This worker imports from browsercc and handles C compilation
 
-import { compile } from './browsercc/index-c.js';
+import { compile, Clang, LLD } from './browsercc/index-c.js';
 import { WASI, File, OpenFile, ConsoleStdout } from './browsercc/browser_wasi_shim.js';
 
 let isReady = false;
 
-// Initialize compiler
+// Pre-loaded compiler instances for faster first run
+let cachedClang = null;
+let cachedLLD = null;
+let cachedSysroot = null;
+
+// Initialize compiler - pre-load heavy resources
 async function initCompiler() {
   try {
     self.postMessage({ type: 'status', data: 'Loading C compiler...' });
+    self.postMessage({ type: 'progress', data: 10 });
+    
+    // Pre-load sysroot.tar (27MB)
+    self.postMessage({ type: 'status', data: 'Loading sysroot...' });
+    const sysrootPromise = fetch(new URL('./browsercc/sysroot.tar', import.meta.url).href)
+      .then(r => r.arrayBuffer());
+    
     self.postMessage({ type: 'progress', data: 20 });
     
-    // Test that imports work by checking if compile function exists
-    if (typeof compile !== 'function') {
-      throw new Error('Compile function not loaded');
-    }
+    // Pre-load Clang WASM module (41MB)
+    self.postMessage({ type: 'status', data: 'Loading Clang compiler...' });
+    const clangPromise = Clang({
+      thisProgram: 'clang',
+      printErr: () => {},  // Suppress during pre-load
+    });
+    
+    self.postMessage({ type: 'progress', data: 40 });
+    
+    // Pre-load LLD WASM module (22MB)
+    self.postMessage({ type: 'status', data: 'Loading linker...' });
+    const lldPromise = LLD({
+      thisProgram: 'wasm-ld',
+      printErr: () => {},  // Suppress during pre-load
+    });
     
     self.postMessage({ type: 'progress', data: 60 });
-    self.postMessage({ type: 'status', data: 'Compiler loaded!' });
+    
+    // Wait for all to load in parallel
+    self.postMessage({ type: 'status', data: 'Initializing...' });
+    const [sysroot, clang, lld] = await Promise.all([
+      sysrootPromise,
+      clangPromise,
+      lldPromise
+    ]);
+    
+    // Cache for later use
+    cachedSysroot = sysroot;
+    cachedClang = clang;
+    cachedLLD = lld;
+    
+    self.postMessage({ type: 'progress', data: 90 });
+    self.postMessage({ type: 'status', data: 'Compiler ready!' });
     
     // Mark as ready
     isReady = true;
