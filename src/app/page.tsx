@@ -264,8 +264,8 @@ export default function Home() {
 
   const handleUpdateSetting = useCallback(<K extends keyof typeof settings>(key: K, value: typeof settings[K]) => {
     updateSetting(key, value);
-    if (key === 'theme') {
-      setThemeMode(value as 'light' | 'dark' | 'system');
+    if (key === 'theme' && (value === 'light' || value === 'dark')) {
+      setThemeMode(value as 'light' | 'dark');
     }
   }, [updateSetting, setThemeMode]);
 
