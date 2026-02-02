@@ -114,7 +114,7 @@ export function Sidebar({
       </div>
 
       {/* Panel content */}
-      <div className="flex-1 w-64 border-r border-neutral-200 dark:border-neutral-800 overflow-hidden">
+      <div className="flex-1 min-w-0 border-r border-neutral-200 dark:border-neutral-800 overflow-hidden">
         {activeTab === 'files' && (
           <FileExplorer
             files={files}

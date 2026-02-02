@@ -7,6 +7,7 @@ import { OutputPanel } from '@/components/OutputPanel';
 import { NetworkBanner } from '@/components/NetworkBanner';
 import { HeaderLoadingIndicator } from '@/components/LoadingBar';
 import { ToastProvider, showToast } from '@/components/Toast';
+import { ResizeHandle } from '@/components/ResizeHandle';
 import { usePythonWorker } from '@/hooks/usePythonWorker';
 import { useCWorker } from '@/hooks/useCCompiler';
 import { useFileSystem } from '@/hooks/useFileSystem';
@@ -71,6 +72,30 @@ export default function Home() {
   const [status, setStatus] = useState<ExecutionStatus>('idle');
   const [copyPasteAllowed, setCopyPasteAllowed] = useState(false);
   const editorRef = useRef<any>(null);
+
+  // Panel resize state
+  const [sidebarWidth, setSidebarWidth] = useState(320); // pixels
+  const [outputWidth, setOutputWidth] = useState(380); // pixels
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Sidebar resize handler
+  const handleSidebarResize = useCallback((delta: number) => {
+    setSidebarWidth(prev => {
+      const newWidth = prev + delta;
+      // Min 200px, max 500px
+      return Math.min(Math.max(newWidth, 200), 500);
+    });
+  }, []);
+
+  // Output panel resize handler
+  const handleOutputResize = useCallback((delta: number) => {
+    setOutputWidth(prev => {
+      // Note: negative delta because dragging right means smaller output
+      const newWidth = prev - delta;
+      // Min 280px, max 600px
+      return Math.min(Math.max(newWidth, 280), 600);
+    });
+  }, []);
 
   // Determine current language from active file or selected language
   const currentLanguage: Language = activeFile?.language || selectedLanguage;
@@ -437,30 +462,35 @@ export default function Home() {
         </header>
         
         {/* Main content */}
-        <main className="flex-1 flex overflow-hidden">
+        <main ref={containerRef} className="flex-1 flex overflow-hidden">
           {/* Sidebar */}
-          <Sidebar
-            activeTab={sidebarTab}
-            onTabChange={setSidebarTab}
-            files={files}
-            activeFileId={activeFileId}
-            currentLanguage={currentLanguage}
-            onFileSelect={handleFileSelect}
-            onFileCreate={createFile}
-            onFileRename={renameFile}
-            onFileDelete={deleteFile}
-            onSearchResultClick={handleSearchResultClick}
-            settings={settings}
-            onUpdateSetting={handleUpdateSetting}
-            onClearData={handleClearData}
-            pythonReady={isPythonReady}
-            pythonModules={DEFAULT_PYTHON_MODULES}
-          />
+          <div style={{ width: sidebarWidth }} className="flex-shrink-0">
+            <Sidebar
+              activeTab={sidebarTab}
+              onTabChange={setSidebarTab}
+              files={files}
+              activeFileId={activeFileId}
+              currentLanguage={currentLanguage}
+              onFileSelect={handleFileSelect}
+              onFileCreate={createFile}
+              onFileRename={renameFile}
+              onFileDelete={deleteFile}
+              onSearchResultClick={handleSearchResultClick}
+              settings={settings}
+              onUpdateSetting={handleUpdateSetting}
+              onClearData={handleClearData}
+              pythonReady={isPythonReady}
+              pythonModules={DEFAULT_PYTHON_MODULES}
+            />
+          </div>
+
+          {/* Resize handle between sidebar and editor */}
+          <ResizeHandle onResize={handleSidebarResize} orientation="vertical" />
 
           {/* Editor and Output */}
-          <div className="flex-1 flex gap-0 min-w-0">
+          <div className="flex-1 flex min-w-0">
             {/* Code Editor */}
-            <div className="flex-1 flex flex-col min-w-0 border-r border-neutral-200 dark:border-neutral-800">
+            <div className="flex-1 flex flex-col min-w-0">
               {/* Editor tabs bar */}
               <div className="flex items-center h-9 bg-neutral-100 dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800 px-1 overflow-x-auto">
                 {files.filter(f => f.language === currentLanguage).slice(0, 5).map((file) => (
@@ -508,8 +538,11 @@ export default function Home() {
               </div>
             </div>
 
+            {/* Resize handle between editor and output */}
+            <ResizeHandle onResize={handleOutputResize} orientation="vertical" />
+
             {/* Output Panel */}
-            <div className="w-[380px] min-w-[320px] flex flex-col bg-white dark:bg-neutral-950 border-l border-neutral-200 dark:border-neutral-800">
+            <div style={{ width: outputWidth }} className="flex-shrink-0 flex flex-col bg-white dark:bg-neutral-950">
               {/* Output header */}
               <div className="flex items-center justify-between h-9 px-4 bg-neutral-50 dark:bg-neutral-900/50 border-b border-neutral-200 dark:border-neutral-800">
                 <div className="flex items-center gap-2">
