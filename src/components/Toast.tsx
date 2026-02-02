@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { cn } from '@/lib/utils';
+import { Snackbar, Alert, Box } from '@mui/material';
 
 interface Toast {
   id: number;
@@ -24,10 +24,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     const id = ++toastId;
     setToasts(prev => [...prev, { id, message }]);
     
-    // Auto remove after 2 seconds
+    // Auto remove after 3 seconds
     setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id));
-    }, 2000);
+    }, 3000);
   }, []);
 
   useEffect(() => {
@@ -40,21 +40,32 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <>
       {children}
-      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[9999] flex flex-col gap-2 pointer-events-none">
+      <Box
+        sx={{
+          position: 'fixed',
+          bottom: 16,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 9999,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 1,
+          pointerEvents: 'none',
+        }}
+      >
         {toasts.map(toast => (
-          <div
+          <Alert
             key={toast.id}
-            className={cn(
-              'px-4 py-2 rounded-lg shadow-lg',
-              'bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900',
-              'text-sm font-medium',
-              'animate-in fade-in slide-in-from-bottom-4 duration-200'
-            )}
+            severity="info"
+            sx={{
+              pointerEvents: 'auto',
+              boxShadow: 3,
+            }}
           >
             {toast.message}
-          </div>
+          </Alert>
         ))}
-      </div>
+      </Box>
     </>
   );
 }

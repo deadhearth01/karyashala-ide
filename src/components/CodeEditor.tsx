@@ -1,9 +1,22 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import Editor, { loader } from '@monaco-editor/react';
-import { useTheme } from './ThemeProvider';
+import { Box, CircularProgress, Typography, Chip } from '@mui/material';
+import { useTheme } from './MuiThemeProvider';
 import { Language } from '@/types';
+
+// Configure Monaco to load from CDN with caching
+loader.config({
+  paths: {
+    vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs'
+  }
+});
+
+// Pre-load Monaco in the background
+if (typeof window !== 'undefined') {
+  loader.init().catch(console.error);
+}
 
 interface CodeEditorProps {
   language: Language;
@@ -22,39 +35,47 @@ const languageMap: Record<Language, string> = {
 };
 
 // Simple fallback editor for offline mode
-function FallbackEditor({ language, value, onChange }: CodeEditorProps) {
+function FallbackEditor({ value, onChange }: { value: string; onChange: (value: string | undefined) => void }) {
   const { theme } = useTheme();
   
   return (
-    <div className="w-full h-full relative">
-      <textarea
+    <Box sx={{ width: '100%', height: '100%', position: 'relative' }}>
+      <Box
+        component="textarea"
         value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={`w-full h-full p-4 font-mono text-sm resize-none outline-none ${
-          theme === 'dark' 
-            ? 'bg-[#1e1e1e] text-[#d4d4d4]' 
-            : 'bg-white text-gray-900'
-        }`}
-        style={{
+        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => onChange(e.target.value)}
+        sx={{
+          width: '100%',
+          height: '100%',
+          p: 2,
           fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, monospace",
           fontSize: '14px',
-          lineHeight: '1.5',
-          tabSize: 4,
+          lineHeight: 1.5,
+          resize: 'none',
+          border: 'none',
+          outline: 'none',
+          bgcolor: theme === 'dark' ? '#1e1e1e' : '#ffffff',
+          color: theme === 'dark' ? '#d4d4d4' : '#1e1e1e',
         }}
         spellCheck={false}
         autoCapitalize="off"
         autoCorrect="off"
       />
-      <div className={`absolute top-2 right-2 text-xs px-2 py-1 rounded ${
-        theme === 'dark' ? 'bg-yellow-900/50 text-yellow-300' : 'bg-yellow-100 text-yellow-800'
-      }`}>
-        Offline Mode
-      </div>
-    </div>
+      <Chip
+        label="Offline Mode"
+        size="small"
+        color="warning"
+        sx={{
+          position: 'absolute',
+          top: 8,
+          right: 8,
+        }}
+      />
+    </Box>
   );
 }
 
-export default function CodeEditor({ 
+export default memo(function CodeEditor({ 
   language, 
   value, 
   onChange, 
@@ -68,7 +89,7 @@ export default function CodeEditor({
   const [loadFailed, setLoadFailed] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Set a timeout for Monaco loading
+  // Set a timeout for Monaco loading - reduced from 10s to 5s
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (isLoading) {
@@ -76,20 +97,19 @@ export default function CodeEditor({
         setLoadFailed(true);
         setIsLoading(false);
       }
-    }, 10000); // 10 second timeout
+    }, 5000);
 
     return () => clearTimeout(timeout);
   }, [isLoading]);
 
   // If Monaco failed to load, use fallback
   if (loadFailed) {
-    return <FallbackEditor language={language} value={value} onChange={onChange} />;
+    return <FallbackEditor value={value} onChange={onChange} />;
   }
 
-  const handleEditorMount = (editor: any) => {
+  const handleEditorMount = useCallback((editor: any) => {
     setIsLoading(false);
     
-    // Configure editor settings
     editor.updateOptions({
       fontSize: fontSize,
       fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, monospace",
@@ -116,11 +136,10 @@ export default function CodeEditor({
       tabSize: tabSize,
     });
 
-    // Call the external onMount handler if provided
     if (onMount) {
       onMount(editor);
     }
-  };
+  }, [fontSize, showLineNumbers, wordWrap, tabSize, onMount]);
 
   return (
     <Editor
@@ -142,13 +161,22 @@ export default function CodeEditor({
         tabSize: tabSize,
       }}
       loading={
-        <div className="w-full h-full flex items-center justify-center bg-white dark:bg-gray-900">
-          <div className="flex items-center gap-3">
-            <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-            <span className="text-gray-500 dark:text-gray-400">Loading editor...</span>
-          </div>
-        </div>
+        <Box
+          sx={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            bgcolor: 'background.paper',
+          }}
+        >
+          <CircularProgress size={24} sx={{ mr: 2 }} />
+          <Typography variant="body2" color="text.secondary">
+            Loading editor...
+          </Typography>
+        </Box>
       }
     />
   );
-}
+});

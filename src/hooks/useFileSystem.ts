@@ -159,6 +159,9 @@ export function useFileSystem() {
       } else {
         setFiles(DEFAULT_FILES);
         setActiveFileId(DEFAULT_FILES[0].id);
+        // Save default files immediately
+        const state: FileSystemState = { files: DEFAULT_FILES, activeFileId: DEFAULT_FILES[0].id };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       }
     } catch (error) {
       console.error('Failed to load files from storage:', error);
@@ -168,16 +171,20 @@ export function useFileSystem() {
     setIsLoaded(true);
   }, []);
 
-  // Save files to localStorage whenever they change
+  // Debounced save files to localStorage whenever they change
   useEffect(() => {
-    if (isLoaded) {
+    if (!isLoaded) return;
+    
+    const timeoutId = setTimeout(() => {
       try {
         const state: FileSystemState = { files, activeFileId };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       } catch (error) {
         console.error('Failed to save files to storage:', error);
       }
-    }
+    }, 300); // 300ms debounce for better performance
+    
+    return () => clearTimeout(timeoutId);
   }, [files, activeFileId, isLoaded]);
 
   // Get active file

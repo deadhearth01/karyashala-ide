@@ -9,62 +9,54 @@ export interface NetworkStatus {
 }
 
 export function useNetworkStatus() {
-  const [status, setStatus] = useState<NetworkStatus>({
-    isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
-    wasOffline: false,
-    connectionType: null,
-  });
-
-  const updateConnectionInfo = useCallback(() => {
-    if (typeof navigator !== 'undefined' && 'connection' in navigator) {
-      const connection = (navigator as any).connection;
-      setStatus(prev => ({
-        ...prev,
-        connectionType: connection?.effectiveType || null,
-      }));
-    }
-  }, []);
+  const [isOnline, setIsOnline] = useState(true);
+  const [wasOffline, setWasOffline] = useState(false);
+  const [connectionType, setConnectionType] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    // Set initial state
+    if (typeof navigator !== 'undefined') {
+      setIsOnline(navigator.onLine);
+    }
 
     const handleOnline = () => {
-      setStatus(prev => ({
-        isOnline: true,
-        wasOffline: prev.wasOffline || !prev.isOnline,
-        connectionType: prev.connectionType,
-      }));
-      updateConnectionInfo();
+      setIsOnline(true);
+      if (!isOnline) {
+        setWasOffline(true);
+      }
     };
 
     const handleOffline = () => {
-      setStatus(prev => ({
-        ...prev,
-        isOnline: false,
-      }));
+      setIsOnline(false);
     };
 
+    const updateConnectionInfo = () => {
+      if (typeof navigator !== 'undefined' && 'connection' in navigator) {
+        const connection = (navigator as any).connection;
+        setConnectionType(connection?.effectiveType || null);
+      }
+    };
+
+    // Add event listeners
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
     // Listen for connection changes
-    if ('connection' in navigator) {
+    if (typeof navigator !== 'undefined' && 'connection' in navigator) {
       const connection = (navigator as any).connection;
       connection?.addEventListener('change', updateConnectionInfo);
+      updateConnectionInfo();
     }
-
-    // Initial connection info
-    updateConnectionInfo();
 
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
-      if ('connection' in navigator) {
+      if (typeof navigator !== 'undefined' && 'connection' in navigator) {
         const connection = (navigator as any).connection;
         connection?.removeEventListener('change', updateConnectionInfo);
       }
     };
-  }, [updateConnectionInfo]);
+  }, [isOnline]);
 
-  return status;
+  return { isOnline, wasOffline, connectionType };
 }

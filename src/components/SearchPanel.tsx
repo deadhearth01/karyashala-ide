@@ -273,7 +273,7 @@ function HighlightedText({ text, start, end }: { text: string; start: number; en
   return (
     <>
       {before}
-      <span className="bg-yellow-200 dark:bg-yellow-500/30 text-yellow-800 dark:text-yellow-300 px-0.5 rounded">
+      <span className="bg-amber-200 dark:bg-amber-500/30 text-amber-800 dark:text-amber-300 px-0.5 rounded">
         {match}
       </span>
       {after}

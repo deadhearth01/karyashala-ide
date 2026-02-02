@@ -33,11 +33,8 @@ export function OutputPanel({ result, status }: OutputPanelProps) {
           Output will appear here
         </p>
         <p className="text-xs text-neutral-400 dark:text-neutral-500 flex items-center gap-1.5">
-          Press 
-          <kbd className="inline-flex items-center px-1.5 py-0.5 rounded bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300 font-mono text-[10px] font-medium shadow-sm">
-            ⌘ Enter
-          </kbd> 
-          or click 
+    
+          click 
           <span className="inline-flex items-center px-2 py-0.5 rounded bg-emerald-500 text-white text-[10px] font-medium">
             Run
           </span>
