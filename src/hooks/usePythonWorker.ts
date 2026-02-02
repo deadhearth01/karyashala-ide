@@ -28,6 +28,7 @@ export function usePythonWorker() {
           // Pyodide Web Worker for Python WebAssembly Execution
           let pyodide = null;
           let isReady = false;
+          let virtualFiles = {}; // Store virtual files for import
 
           // Import Pyodide from CDN (will be served from cache if available)
           async function initPyodide() {
@@ -87,7 +88,32 @@ def input(prompt=''):
             }
           }
 
-          async function runPython(code) {
+          // Write virtual files to Pyodide's file system for import support
+          function setupVirtualFiles(files) {
+            if (!pyodide || !files) return;
+            
+            try {
+              // Write each file to Pyodide's virtual file system
+              for (const [filename, content] of Object.entries(files)) {
+                if (filename.endsWith('.py')) {
+                  pyodide.FS.writeFile('/' + filename, content);
+                }
+              }
+              
+              // Add current directory to Python path if not already
+              pyodide.runPython(\`
+import sys
+if '' not in sys.path:
+    sys.path.insert(0, '')
+if '/' not in sys.path:
+    sys.path.insert(0, '/')
+              \`);
+            } catch (e) {
+              console.error('Error setting up virtual files:', e);
+            }
+          }
+
+          async function runPython(code, files) {
             if (!isReady || !pyodide) {
               return {
                 stdout: '',
@@ -100,6 +126,11 @@ def input(prompt=''):
             let stderr = '';
 
             try {
+              // Set up virtual files for import support
+              if (files) {
+                setupVirtualFiles(files);
+              }
+
               // Set up output capture
               pyodide.runPython(
                 "import sys\\n" +
@@ -159,13 +190,13 @@ def input(prompt=''):
           }
 
           self.onmessage = async function(e) {
-            const { type, code } = e.data;
+            const { type, code, files } = e.data;
             
             if (type === 'init') {
               await initPyodide();
             } else if (type === 'run') {
               const startTime = performance.now();
-              const result = await runPython(code);
+              const result = await runPython(code, files);
               const executionTime = performance.now() - startTime;
               
               self.postMessage({ 
@@ -245,7 +276,7 @@ def input(prompt=''):
     };
   }, []);
 
-  const runPython = useCallback((code: string): Promise<ExecutionResult> => {
+  const runPython = useCallback((code: string, files?: Record<string, string>): Promise<ExecutionResult> => {
     return new Promise((resolve) => {
       if (!workerRef.current) {
         resolve({
@@ -268,7 +299,7 @@ def input(prompt=''):
       }
 
       resolveRef.current = resolve;
-      workerRef.current.postMessage({ type: 'run', code });
+      workerRef.current.postMessage({ type: 'run', code, files });
     });
   }, [isReady, error]);
 

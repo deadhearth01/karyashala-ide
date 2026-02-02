@@ -10,6 +10,10 @@ interface CodeEditorProps {
   value: string;
   onChange: (value: string | undefined) => void;
   onMount?: (editor: any) => void;
+  fontSize?: number;
+  showLineNumbers?: boolean;
+  wordWrap?: boolean;
+  tabSize?: number;
 }
 
 const languageMap: Record<Language, string> = {
@@ -50,7 +54,16 @@ function FallbackEditor({ language, value, onChange }: CodeEditorProps) {
   );
 }
 
-export default function CodeEditor({ language, value, onChange, onMount }: CodeEditorProps) {
+export default function CodeEditor({ 
+  language, 
+  value, 
+  onChange, 
+  onMount,
+  fontSize = 14,
+  showLineNumbers = true,
+  wordWrap = false,
+  tabSize = 4,
+}: CodeEditorProps) {
   const { theme } = useTheme();
   const [loadFailed, setLoadFailed] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -78,12 +91,12 @@ export default function CodeEditor({ language, value, onChange, onMount }: CodeE
     
     // Configure editor settings
     editor.updateOptions({
-      fontSize: 14,
+      fontSize: fontSize,
       fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, monospace",
       fontLigatures: true,
       minimap: { enabled: false },
       scrollBeyondLastLine: false,
-      lineNumbers: 'on',
+      lineNumbers: showLineNumbers ? 'on' : 'off',
       glyphMargin: false,
       folding: true,
       lineDecorationsWidth: 10,
@@ -99,6 +112,8 @@ export default function CodeEditor({ language, value, onChange, onMount }: CodeE
       smoothScrolling: true,
       bracketPairColorization: { enabled: true },
       automaticLayout: true,
+      wordWrap: wordWrap ? 'on' : 'off',
+      tabSize: tabSize,
     });
 
     // Call the external onMount handler if provided
@@ -116,12 +131,15 @@ export default function CodeEditor({ language, value, onChange, onMount }: CodeE
       theme={theme === 'dark' ? 'vs-dark' : 'light'}
       onMount={handleEditorMount}
       options={{
-        fontSize: 14,
+        fontSize: fontSize,
         fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, monospace",
         minimap: { enabled: false },
         scrollBeyondLastLine: false,
         automaticLayout: true,
         padding: { top: 16, bottom: 16 },
+        lineNumbers: showLineNumbers ? 'on' : 'off',
+        wordWrap: wordWrap ? 'on' : 'off',
+        tabSize: tabSize,
       }}
       loading={
         <div className="w-full h-full flex items-center justify-center bg-white dark:bg-gray-900">

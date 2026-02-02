@@ -22,3 +22,41 @@ export interface EditorTheme {
   name: string;
   isDark: boolean;
 }
+
+// File System Types
+export interface VirtualFile {
+  id: string;
+  name: string;
+  content: string;
+  language: Language;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface FileSystemState {
+  files: VirtualFile[];
+  activeFileId: string | null;
+}
+
+// Settings Types
+export type ThemeMode = 'light' | 'dark' | 'system';
+export type EditorFontSize = 12 | 14 | 16 | 18 | 20;
+
+export interface AppSettings {
+  theme: ThemeMode;
+  fontSize: EditorFontSize;
+  autoSave: boolean;
+  showLineNumbers: boolean;
+  wordWrap: boolean;
+  tabSize: 2 | 4;
+}
+
+// Python Module Status
+export interface PythonModuleInfo {
+  name: string;
+  version: string;
+  isInstalled: boolean;
+}
+
+// Sidebar Navigation
+export type SidebarTab = 'files' | 'search' | 'settings';
