@@ -40,7 +40,7 @@ import {
   Close as CloseIcon,
 } from '@mui/icons-material';
 
-import { SidebarTab, VirtualFile, Language, AppSettings } from '@/types';
+import { SidebarTab, VirtualFile, Language, AppSettings, EditorFontSize } from '@/types';
 
 interface MuiSidebarProps {
   activeTab: SidebarTab;
@@ -444,7 +444,7 @@ function SettingsPanel({
             <Typography variant="caption" color="text.secondary">Font Size: {settings.fontSize}px</Typography>
             <Slider
               value={settings.fontSize}
-              onChange={(_, value) => onUpdateSetting('fontSize', value as number)}
+              onChange={(_, value) => onUpdateSetting('fontSize', value as EditorFontSize)}
               min={10}
               max={24}
               step={1}
@@ -456,7 +456,7 @@ function SettingsPanel({
             <Typography variant="caption" color="text.secondary">Tab Size: {settings.tabSize}</Typography>
             <Slider
               value={settings.tabSize}
-              onChange={(_, value) => onUpdateSetting('tabSize', value as number)}
+              onChange={(_, value) => onUpdateSetting('tabSize', value as AppSettings['tabSize'])}
               min={2}
               max={8}
               step={2}

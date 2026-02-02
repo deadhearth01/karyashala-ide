@@ -40,7 +40,7 @@ export interface FileSystemState {
 
 // Settings Types
 export type ThemeMode = 'light' | 'dark' | 'system';
-export type EditorFontSize = 12 | 14 | 16 | 18 | 20;
+export type EditorFontSize = number; // 10-24 supported
 
 export interface AppSettings {
   theme: ThemeMode;
@@ -48,7 +48,7 @@ export interface AppSettings {
   autoSave: boolean;
   showLineNumbers: boolean;
   wordWrap: boolean;
-  tabSize: 2 | 4;
+  tabSize: number;
 }
 
 // Python Module Status
